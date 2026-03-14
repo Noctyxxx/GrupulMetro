@@ -6,43 +6,60 @@
 
 <style>
 body{
-font-family:Arial;
-background:#0f172a;
-color:white;
-text-align:center;
-padding:40px;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+  text-align:center;
+  padding:40px;
 }
 
 .box{
-background:#1e293b;
-padding:20px;
-border-radius:10px;
-max-width:600px;
-margin:auto;
+  background:#1e293b;
+  padding:20px;
+  border-radius:10px;
+  max-width:600px;
+  margin:auto;
 }
 
 input{
-padding:10px;
-margin:5px;
-border-radius:6px;
-border:none;
-width:80%;
+  padding:10px;
+  margin:5px;
+  border-radius:6px;
+  border:none;
+  width:80%;
 }
 
 button{
-padding:10px 20px;
-border:none;
-border-radius:6px;
-background:#22c55e;
-cursor:pointer;
-margin:5px;
+  padding:10px 20px;
+  border:none;
+  border-radius:6px;
+  background:#22c55e;
+  cursor:pointer;
+  margin:5px;
 }
 
 .member{
-background:#334155;
-margin:8px;
-padding:10px;
-border-radius:6px;
+  background:#334155;
+  margin:8px;
+  padding:10px;
+  border-radius:6px;
+}
+
+#chatMessages{
+  background:#1e293b;
+  height:200px;
+  overflow-y:auto;
+  margin:10px 0;
+  padding:10px;
+  border-radius:6px;
+  text-align:left;
+}
+
+.chatMsg{
+  margin-bottom:8px;
+  padding:6px;
+  background:#334155;
+  border-radius:6px;
 }
 </style>
 
@@ -55,9 +72,7 @@ border-radius:6px;
 <h1>🚇 Grupul Metro</h1>
 
 <input id="username" placeholder="Nume utilizator">
-
 <br>
-
 <button onclick="login()">Login</button>
 
 </div>
@@ -67,93 +82,89 @@ border-radius:6px;
 <h2 id="welcome"></h2>
 
 <h3>Membri</h3>
-
 <div id="members"></div>
+
+<h3>Chat</h3>
+<div id="chatMessages"></div>
+<input id="chatInput" placeholder="Scrie un mesaj">
+<br>
+<button onclick="sendMessage()">Trimite</button>
 
 </div>
 
 <script>
-
 let users = JSON.parse(localStorage.getItem("users") || "[]")
+let messages = JSON.parse(localStorage.getItem("messages") || "[]")
 let currentUser = null
 
 function login(){
+  let name = document.getElementById("username").value
+  if(name==""){
+    alert("Scrie un nume")
+    return
+  }
 
-let name = document.getElementById("username").value
+  let user = users.find(u=>u.name==name)
+  if(!user){
+    let role = users.length==0 ? "owner" : "member"
+    user = {name:name, role:role}
+    users.push(user)
+    saveUsers()
+  }
 
-if(name==""){
-alert("Scrie un nume")
-return
+  currentUser = user
+
+  document.getElementById("loginBox").style.display="none"
+  document.getElementById("app").style.display="block"
+
+  document.getElementById("welcome").innerText =
+  "Bine ai venit "+user.name+" ("+user.role+")"
+
+  renderUsers()
+  renderMessages()
 }
 
-let user = users.find(u=>u.name==name)
-
-if(!user){
-
-let role = users.length==0 ? "owner" : "member"
-
-user = {name:name, role:role}
-
-users.push(user)
-
-save()
-
-}
-
-currentUser = user
-
-document.getElementById("loginBox").style.display="none"
-document.getElementById("app").style.display="block"
-
-document.getElementById("welcome").innerText =
-"Bine ai venit "+user.name+" ("+user.role+")"
-
-render()
-
-}
-
-function render(){
-
-let html=""
-
-users.forEach(u=>{
-
-html+=`<div class="member">
-${u.name} - ${u.role}
-`
-
-if(currentUser.role=="owner" && u.role=="member"){
-
-html+=`<button onclick="makeOwner('${u.name}')">Fă Owner</button>`
-
-}
-
-html+="</div>"
-
-})
-
-document.getElementById("members").innerHTML = html
-
+function renderUsers(){
+  let html=""
+  users.forEach(u=>{
+    html+=`<div class="member">${u.name} - ${u.role}`
+    if(currentUser.role=="owner" && u.role=="member"){
+      html+=` <button onclick="makeOwner('${u.name}')">Fă Owner</button>`
+    }
+    html+="</div>"
+  })
+  document.getElementById("members").innerHTML = html
 }
 
 function makeOwner(name){
-
-let user = users.find(u=>u.name==name)
-
-user.role="owner"
-
-save()
-
-render()
-
+  let user = users.find(u=>u.name==name)
+  user.role="owner"
+  saveUsers()
+  renderUsers()
 }
 
-function save(){
-
-localStorage.setItem("users", JSON.stringify(users))
-
+function saveUsers(){
+  localStorage.setItem("users", JSON.stringify(users))
 }
 
+function sendMessage(){
+  let text = document.getElementById("chatInput").value
+  if(text=="") return
+  let msg = {user: currentUser.name, text:text, time: new Date().toLocaleTimeString()}
+  messages.push(msg)
+  localStorage.setItem("messages", JSON.stringify(messages))
+  document.getElementById("chatInput").value=""
+  renderMessages()
+}
+
+function renderMessages(){
+  let html=""
+  messages.forEach(m=>{
+    html+=`<div class="chatMsg"><b>${m.user}</b> [${m.time}]: ${m.text}</div>`
+  })
+  document.getElementById("chatMessages").innerHTML = html
+  document.getElementById("chatMessages").scrollTop = document.getElementById("chatMessages").scrollHeight
+}
 </script>
 
 </body>
